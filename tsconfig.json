@@ -12,6 +12,7 @@
 		"strict": true
 	},
 	"exclude": [
+		"bin",
 		"node_modules"
 	]
 }
