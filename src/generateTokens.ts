@@ -1,5 +1,3 @@
-#!./node_modules/.bin/ts-node
-
 export enum Token {
   LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
   BANG_EQUAL, BANG, EQUAL_EQUAL, EQUAL, GREATER_EQUAL, GREATER, LESS_EQUAL, LESS,
@@ -8,7 +6,7 @@ export enum Token {
   EOF, ERROR
 };
 
-const KEYWORDS: Record<string, Exclude<Token, Token.STRING | Token.NUMBER | Token.ERROR>> = [
+const KEYWORDS: Record<string, Exclude<Token, Token.IDENTIFIER | Token.STRING | Token.NUMBER | Token.ERROR>> = [
   Token.AND, Token.CLASS, Token.ELSE, Token.FALSE, Token.FUN, Token.FOR, Token.IF, Token.NIL,
   Token.OR, Token.PRINT, Token.RETURN, Token.SUPER, Token.THIS, Token.TRUE, Token.VAR, Token.WHILE
 ].reduce((accum, token) => ({ ...accum, [Token[token].toLowerCase()]: token }), {});
@@ -23,13 +21,15 @@ export enum TokenError {
 };
 
 export type GeneratedToken = { start: number, end: number, line: number } & (
-  | { kind: Exclude<Token, Token.STRING | Token.NUMBER | Token.ERROR> }
+  | { kind: Exclude<Token, Token.IDENTIFIER | Token.STRING | Token.NUMBER | Token.ERROR> }
+  | { kind: Token.IDENTIFIER, value: string }
   | { kind: Token.STRING, value: string }
   | { kind: Token.NUMBER, value: number }
   | { kind: Token.ERROR, error: TokenError }
 );
 
-function* generateTokens(source: string): Generator<GeneratedToken> {
+export type TokenGenerator = Generator<GeneratedToken>;
+function* generateTokens(source: string): TokenGenerator {
   let index = 0;
   let line = 1;
 
@@ -106,8 +106,12 @@ function* generateTokens(source: string): Generator<GeneratedToken> {
         const value = matched[0];
         index += value.length - 1;
 
-        const kind = isKeyword(value) ? KEYWORDS[value] : Token.IDENTIFIER;
-        yield { kind, start, end: index, line };
+        if (isKeyword(value)) {
+          yield { kind: KEYWORDS[value], start, end: index, line };
+        } else {
+          yield { kind: Token.IDENTIFIER, start, end: index, line, value };
+        }
+
         break;
       }
     }
