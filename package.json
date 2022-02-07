@@ -2,20 +2,36 @@
   "name": "vscode-lox",
   "version": "1.0.0",
   "description": "VSCode support for the lox language",
-  "main": "lox.ts",
   "author": "Kevin Newton",
   "license": "MIT",
+  "main": "./out/extension",
+  "dependencies": {
+    "vscode-languageclient": "^7.0.0",
+    "vscode-languageserver": "^7.0.0",
+    "vscode-languageserver-textdocument": "^1.0.4"
+  },
   "devDependencies": {
     "@types/node": "^17.0.14",
+    "@types/vscode": "^1.64.0",
     "ts-node": "^10.4.0",
     "typescript": "^4.1.2"
   },
+  "engines": {
+    "vscode": "^1.18.0"
+  },
+  "activationEvents": [
+    "onLanguage:lox"
+  ],
   "contributes": {
     "languages": [
       {
         "id": "lox",
-        "aliases": ["lox"],
-        "extensions": [".lox"],
+        "aliases": [
+          "lox"
+        ],
+        "extensions": [
+          ".lox"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -26,5 +42,12 @@
         "path": "./syntaxes/lox.tmLanguage.json"
       }
     ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "package": "vsce package --yarn --githubBranch main",
+    "publish": "vsce publish --yarn --githubBranch main",
+    "vscode:prepublish": "yarn compile",
+    "watch": "tsc --watch -p ./"
   }
 }

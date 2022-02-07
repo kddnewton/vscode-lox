@@ -15,6 +15,9 @@ for (const token of generateTokens(source)) {
     case Token.NUMBER:
       console.log(Number.isInteger(token.value) ? `${token.value}.0` : token.value);
       break;
+    case Token.ERROR:
+      console.log(token.error);
+      break;
     default:
       console.log("null");
       break;

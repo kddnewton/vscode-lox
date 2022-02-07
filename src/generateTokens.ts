@@ -5,10 +5,10 @@ export enum Token {
   BANG_EQUAL, BANG, EQUAL_EQUAL, EQUAL, GREATER_EQUAL, GREATER, LESS_EQUAL, LESS,
   STRING, NUMBER, IDENTIFIER,
   AND, CLASS, ELSE, FALSE, FUN, FOR, IF, NIL, OR, PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
-  EOF
-}
+  EOF, ERROR
+};
 
-const KEYWORDS: Record<string, Exclude<Token, Token.STRING | Token.NUMBER>> = [
+const KEYWORDS: Record<string, Exclude<Token, Token.STRING | Token.NUMBER | Token.ERROR>> = [
   Token.AND, Token.CLASS, Token.ELSE, Token.FALSE, Token.FUN, Token.FOR, Token.IF, Token.NIL,
   Token.OR, Token.PRINT, Token.RETURN, Token.SUPER, Token.THIS, Token.TRUE, Token.VAR, Token.WHILE
 ].reduce((accum, token) => ({ ...accum, [Token[token].toLowerCase()]: token }), {});
@@ -17,10 +17,16 @@ function isKeyword(value: string): value is keyof typeof KEYWORDS {
   return KEYWORDS.hasOwnProperty(value);
 }
 
-type GeneratedToken = { start: number, end: number, line: number } & (
-  | { kind: Exclude<Token, Token.STRING | Token.NUMBER> }
+export enum TokenError {
+  UNRECOGNIZED_LEXEME,
+  UNTERMINATED_STRING
+};
+
+export type GeneratedToken = { start: number, end: number, line: number } & (
+  | { kind: Exclude<Token, Token.STRING | Token.NUMBER | Token.ERROR> }
   | { kind: Token.STRING, value: string }
   | { kind: Token.NUMBER, value: number }
+  | { kind: Token.ERROR, error: TokenError }
 );
 
 function* generateTokens(source: string): Generator<GeneratedToken> {
@@ -67,7 +73,8 @@ function* generateTokens(source: string): Generator<GeneratedToken> {
         }
 
         if (index === source.length) {
-          throw new Error("Unterminated string.");
+          yield { kind: Token.ERROR, start, end: index, line, error: TokenError.UNTERMINATED_STRING };
+          break;
         }
 
         index += 1;
@@ -91,8 +98,9 @@ function* generateTokens(source: string): Generator<GeneratedToken> {
         pattern.lastIndex = index - 1;
 
         const matched = pattern.exec(source);
-        if (!matched) {
-          throw new Error("Syntax error.");
+        if (!matched || matched.index !== index - 1) {
+          yield { kind: Token.ERROR, start, end: index, line, error: TokenError.UNRECOGNIZED_LEXEME };
+          break;
         }
 
         const value = matched[0];
