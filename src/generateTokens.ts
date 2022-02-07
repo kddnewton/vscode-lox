@@ -1,8 +1,6 @@
 #!./node_modules/.bin/ts-node
 
-import fs from "fs";
-
-enum Token {
+export enum Token {
   LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
   BANG_EQUAL, BANG, EQUAL_EQUAL, EQUAL, GREATER_EQUAL, GREATER, LESS_EQUAL, LESS,
   STRING, NUMBER, IDENTIFIER,
@@ -118,20 +116,4 @@ function* generateTokens(source: string): Generator<GeneratedToken> {
   }
 }
 
-const source = fs.readFileSync(process.argv[2], "utf-8");
-
-for (const token of generateTokens(source)) {
-  process.stdout.write(`${Token[token.kind]} ${source.substring(token.start, token.end)} `);
-
-  switch (token.kind) {
-    case Token.STRING:
-      console.log(token.value);
-      break;
-    case Token.NUMBER:
-      console.log(Number.isInteger(token.value) ? `${token.value}.0` : token.value);
-      break;
-    default:
-      console.log("null");
-      break;
-  }
-}
+export default generateTokens;
