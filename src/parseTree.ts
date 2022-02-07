@@ -22,6 +22,7 @@ type Scope = Location & (
 export type AstNode = Expression | Statement | Scope;
 
 class Parser {
+  public sourceLength: number;
   private generator: TokenGenerator;
 
   public previous: GeneratedToken;
@@ -32,6 +33,8 @@ class Parser {
 
   constructor(source: string) {
     this.comments = [];
+
+    this.sourceLength = source.length;
     this.generator = generateTokens(source, (comment) => {
       this.comments.push(comment);
     });
@@ -277,19 +280,27 @@ function parseDeclaration(parser: Parser): Statement {
   }
 }
 
-function parseTree(source: string): { parser: Parser, node: Scope } {
-  const parser = new Parser(source);
+function parseScope(parser: Parser): Scope {
   const node: Scope = {
     kind: "decls",
     decls: [],
-    loc: { start: 0, end: source.length }
+    loc: { start: 0, end: parser.sourceLength }
   };
 
   while (!match(parser, Token.EOF)) {
     node.decls.push(parseDeclaration(parser));
   }
 
-  return { parser, node };
+  return node;
+}
+
+// This is the top-level parse function. It accepts the source of the lox file
+// that should be parsed and returns both the parser (which will contain the
+// comments and links to any missing or skipped tokens) and the top-level AST
+// node.
+function parseTree(source: string): { parser: Parser, scope: Scope } {
+  const parser = new Parser(source);
+  return { parser, scope: parseScope(parser) };
 }
 
 export default parseTree;

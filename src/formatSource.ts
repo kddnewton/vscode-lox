@@ -34,8 +34,8 @@ const plugin: Plugin<AstNode> = {
   parsers: {
     lox: {
       parse(source) {
-        const { parser, node } = parseTree(source);
-        return { ...node, comments: parser.comments };
+        const { parser, scope } = parseTree(source);
+        return { ...scope, comments: parser.comments };
       },
       astFormat: "lox",
       locStart(node: AstNode) {
