@@ -1,16 +1,17 @@
-import generateTokens, { GeneratedToken, Token, TokenGenerator } from "./generateTokens";
+import generateTokens, { Comment, GeneratedToken, Token, TokenGenerator } from "./generateTokens";
 
-type TreeNode = { loc: { start: number, end: number } } & (
-  | { kind: "binary", left: TreeNode, operator: Token, right: TreeNode }
+export type TreeNode = { loc: { start: number, end: number } } & (
+  | { kind: "binary", left: TreeNode, oper: Token, right: TreeNode }
   | { kind: "boolean", value: boolean }
-  | { kind: "decls", declarations: TreeNode[] }
+  | { kind: "decls", decls: TreeNode[] }
+  | { kind: "exprStmt", expr: TreeNode }
   | { kind: "nil" }
   | { kind: "number", value: number }
-  | { kind: "print", node: TreeNode }
+  | { kind: "printStmt", expr: TreeNode }
   | { kind: "string", value: string }
   | { kind: "varDecl", var: string, init: TreeNode | null }
-  | { kind: "var", var: string }
-  | { kind: "unary", operator: Token, node: TreeNode }
+  | { kind: "var", name: string }
+  | { kind: "unary", oper: Token, expr: TreeNode }
 );
 
 class Parser {
@@ -19,14 +20,17 @@ class Parser {
   public previous: GeneratedToken;
   public current: GeneratedToken;
 
+  public comments: Comment[];
   public missingTokens: { token: Token, start: number, end: number, message: string }[];
 
-  constructor(generator: TokenGenerator) {
-    this.generator = generator;
+  constructor(source: string) {
+    this.comments = [];
+    this.generator = generateTokens(source, (comment) => {
+      this.comments.push(comment);
+    });
 
-    this.previous = generator.next().value;
+    this.previous = this.generator.next().value;
     this.current = this.previous;
-
     this.missingTokens = [];
   }
 
@@ -84,7 +88,7 @@ const parseRules: { [T in Token]: ParseRule<T> } = {
     prefix(parser) {
       return {
         kind: "var",
-        var: parser.previous.value,
+        name: parser.previous.value,
         loc: { start: parser.previous.start, end: parser.previous.end }
       };
     },
@@ -151,23 +155,23 @@ function atom(parser: Parser): TreeNode {
 
 // ("-" | "!") node
 function unary(parser: Parser): TreeNode {
-  const operator = parser.previous.kind;
-  const node = parsePrecedence(parser, Precedence.UNARY);
+  const oper = parser.previous.kind;
+  const expr = parsePrecedence(parser, Precedence.UNARY);
 
-  switch (operator) {
+  switch (oper) {
     case Token.MINUS:
       return {
         kind: "unary",
-        operator,
-        node,
-        loc: { start: parser.previous.start, end: node.loc.end }
+        oper,
+        expr,
+        loc: { start: parser.previous.start, end: expr.loc.end }
       };
     case Token.BANG:
       return {
         kind: "unary",
-        operator,
-        node,
-        loc: { start: parser.previous.start, end: node.loc.end }
+        oper,
+        expr,
+        loc: { start: parser.previous.start, end: expr.loc.end }
       };
     default:
       throw new Error("Parsing error.");
@@ -176,13 +180,13 @@ function unary(parser: Parser): TreeNode {
 
 // node "+" node
 function binary(parser: Parser, left: TreeNode): TreeNode {
-  const operator = parser.previous.kind;
-  const right = parsePrecedence(parser, parseRules[operator].prec + 1);
+  const oper = parser.previous.kind;
+  const right = parsePrecedence(parser, parseRules[oper].prec + 1);
 
   return {
     kind: "binary",
     left,
-    operator,
+    oper,
     right,
     loc: { start: left.loc.start, end: right.loc.end }
   };
@@ -213,9 +217,9 @@ function expression(parser: Parser): TreeNode {
 
 // "print" expression ";"
 function printStatement(parser: Parser): TreeNode {
-  const node = {
-    kind: "print" as const,
-    node: expression(parser),
+  const node: TreeNode = {
+    kind: "printStmt",
+    expr: expression(parser),
     loc: { start: parser.previous.start, end: parser.previous.end }
   };
 
@@ -229,10 +233,11 @@ function statement(parser: Parser): TreeNode {
     return printStatement(parser);
   }
 
-  const node = expression(parser);
-  consume(parser, Token.SEMICOLON, node.loc, "Expect ';' after expression.");
-  node.loc.end = parser.previous.end;
-  return node;
+  const expr = expression(parser);
+  consume(parser, Token.SEMICOLON, expr.loc, "Expect ';' after expression.");
+
+  expr.loc.end = parser.previous.end;
+  return { kind: "exprStmt", expr, loc: expr.loc };
 }
 
 // "var" variable ("=" expression)? ";"
@@ -266,15 +271,15 @@ function parseDeclaration(parser: Parser): TreeNode {
 }
 
 function parseTree(source: string): { parser: Parser, node: TreeNode } {
-  const parser = new Parser(generateTokens(source));
+  const parser = new Parser(source);
   const node: TreeNode = {
     kind: "decls",
-    declarations: [],
+    decls: [],
     loc: { start: 0, end: source.length }
   };
 
   while (!match(parser, Token.EOF)) {
-    node.declarations.push(parseDeclaration(parser));
+    node.decls.push(parseDeclaration(parser));
   }
 
   return{ parser, node };

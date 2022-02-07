@@ -29,7 +29,11 @@ export type GeneratedToken = { start: number, end: number, line: number } & (
 );
 
 export type TokenGenerator = Generator<GeneratedToken>;
-function* generateTokens(source: string): TokenGenerator {
+
+export type Comment = { value: string, loc: { start: number, end: number } };
+type HandleComment = ((comment: Comment) => void);
+
+function* generateTokens(source: string, onComment?: HandleComment): TokenGenerator {
   let index = 0;
   let line = 1;
 
@@ -54,7 +58,14 @@ function* generateTokens(source: string): TokenGenerator {
       case ";": yield { kind: Token.SEMICOLON, start, end: index, line }; break;
       case "/": {
         if (source[index] === "/") {
-          while (source[index++] !== "\n");
+          while (source[index++] !== "\n" && index < source.length);
+          if (onComment) {
+            onComment({
+              value: source.substring(start, index),
+              loc: { start, end: index }
+            });
+          }
+
           break;
         }
         yield { kind: Token.SLASH, start, end: index, line }; break;
