@@ -1,6 +1,6 @@
 import prettier, { Doc, Plugin } from "prettier";
 import { Comment, Token } from "./generateTokens";
-import parseTree, { TreeNode } from "./parseTree";
+import parseTree, { AstNode } from "./parseTree";
 
 function printOperator(token: Token) {
   switch (token) {
@@ -23,7 +23,7 @@ function printOperator(token: Token) {
 
 const { group, hardline, line, indent } = prettier.doc.builders;
 
-const plugin: Plugin<TreeNode> = {
+const plugin: Plugin<AstNode> = {
   languages: [
     {
       name: "Lox",
@@ -38,10 +38,10 @@ const plugin: Plugin<TreeNode> = {
         return { ...node, comments: parser.comments };
       },
       astFormat: "lox",
-      locStart(node: TreeNode) {
+      locStart(node: AstNode) {
         return node.loc.start;
       },
-      locEnd(node: TreeNode) {
+      locEnd(node: AstNode) {
         return node.loc.end;
       }
     }
@@ -52,7 +52,7 @@ const plugin: Plugin<TreeNode> = {
         return true;
       },
       print(path, opts, print) {
-        const node: TreeNode = path.getValue();
+        const node: AstNode = path.getValue();
 
         switch (node.kind) {
           case "binary":
@@ -62,8 +62,6 @@ const plugin: Plugin<TreeNode> = {
               printOperator(node.oper),
               indent([line, path.call(print, "right")])
             ]);
-          case "boolean":
-            return node.value ? "true" : "false";
           case "decls": {
             const parts: Doc = [];
             let previous: number = 0;
@@ -87,14 +85,20 @@ const plugin: Plugin<TreeNode> = {
           }
           case "exprStmt":
             return [path.call(print, "expr"), ";"];
-          case "nil":
-            return "nil";
-          case "number":
-            return node.value.toString();
+          case "literal":
+            if (node.value === true) {
+              return "true";
+            } else if (node.value === false) {
+              return "false";
+            } else if (node.value === null) {
+              return "null";
+            } else if (typeof node.value === "number") {
+              return node.value.toString();
+            } else {
+              return group(["\"", node.value, "\""]);
+            }
           case "printStmt":
             return group(["print ", path.call(print, "expr"), ";"]);
-          case "string":
-            return group(["\"", node.value, "\""]);
           case "unary":
             return group([printOperator(node.oper), path.call(print, "expr")]);
           case "var":
@@ -119,22 +123,19 @@ const plugin: Plugin<TreeNode> = {
 };
 
 // Doing it this way since @types/prettier is missing this declaration.
-(plugin as any).printers.lox.getCommentChildNodes = (node: TreeNode) => {
+(plugin as any).printers.lox.getCommentChildNodes = (node: AstNode) => {
   switch (node.kind) {
     case "binary":
       return [node.left, node.right];
-    case "boolean":
-    case "nil":
-    case "number":
-    case "string":
-    case "var":
-      return [];
     case "decls":
       return node.decls;
     case "exprStmt":
     case "printStmt":
     case "unary":
       return [node.expr];
+    case "literal":
+    case "var":
+      return [];
     case "varDecl":
       return [node.init];
   }
