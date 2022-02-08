@@ -55,6 +55,12 @@ const plugin: Plugin<AstNode> = {
         const node: AstNode = path.getValue();
 
         switch (node.kind) {
+          case "assign":
+            return group([
+              path.call(print, "variable"),
+              " =",
+              indent([line, path.call(print, "expression")])
+            ]);
           case "binary":
             return group([
               path.call(print, "left"),
@@ -136,7 +142,7 @@ const plugin: Plugin<AstNode> = {
     case "unary":
       return [node.expr];
     case "literal":
-    case "var":
+    case "variable":
       return [];
     case "varDecl":
       return [node.init];
