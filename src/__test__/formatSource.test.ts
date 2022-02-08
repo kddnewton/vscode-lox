@@ -60,16 +60,31 @@ describe("formatSource", () => {
     test("break to flat", () => {
       expect("1 +\n  2;").toChangeFormat("1 + 2;");
     });
+
+    test("comment", () => {
+      expect("1 + 2; // comment").toMatchFormat();
+    });
+
+    test.each(["-", "+", "/", "*", "!=", "==", ">", ">=", "<", "<="])("%s", (operator) => {
+      expect(`1 ${operator} 2;`).toMatchFormat();
+    });
   });
 
   describe("literal", () => {
     test.each(["true", "false", "nil", "123", "\"abc\""])("%s", (literal) => {
       expect(`${literal};`).toMatchFormat();
+      expect(`${literal}; // comment`).toMatchFormat();
     });
   });
 
-  test("printStmt", () => {
-    expect("print xxx;").toMatchFormat();
+  describe("printStmt", () => {
+    test("plain", () => {
+      expect("print xxx;").toMatchFormat();
+    });
+
+    test("comment", () => {
+      expect("print xxx; // comment").toMatchFormat();
+    });
   });
 
   describe("scope", () => {
@@ -98,9 +113,17 @@ describe("formatSource", () => {
     test("bang", () => {
       expect("!xxx;").toMatchFormat();
     });
+
+    test("comment", () => {
+      expect("!xxx; // comment").toMatchFormat();
+    });
   });
 
   describe("varDecl", () => {
+    test("no init", () => {
+      expect("var xxx;").toMatchFormat();
+    });
+
     test("flat to flat", () => {
       expect("var xxx = 1;").toMatchFormat();
     });
@@ -115,6 +138,14 @@ describe("formatSource", () => {
 
     test("break to flat", () => {
       expect("var xxx =\n  2;").toChangeFormat("var xxx = 2;");
+    });
+  
+    test("comment", () => {
+      expect("var xxx = 1; // comment").toMatchFormat();
+    });
+
+    test("comment on variable", () => {
+      expect("var xxx = // comment\n  1;").toMatchFormat();
     });
   });
 });
