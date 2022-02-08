@@ -12,7 +12,11 @@ function printAST(node: AstNode): string {
     case "exprStmt":
       return printAST(node.expr);
     case "ifStmt":
-      return `(if ${printAST(node.pred)} ${printAST(node.stmt)})`;
+      if (node.cons) {
+        return `(if ${printAST(node.pred)} ${printAST(node.stmt)} ${printAST(node.cons)})`;
+      } else {
+        return `(if ${printAST(node.pred)} ${printAST(node.stmt)})`;
+      }
     case "literal":
       return printLiteral(node);
     case "missing":

@@ -94,15 +94,19 @@ describe("formatSource", () => {
     });
 
     test("flat to break", () => {
-      expect(`if (${long}) bar;`).toChangeFormat(`if (\n    ${long}\n) bar;`);
+      expect(`if (${long}) bar;`).toChangeFormat(`if (\n  ${long}\n)\n  bar;`);
     });
 
     test("break to break", () => {
-      expect(`if (\n    ${long}\n) bar;`).toMatchFormat();
+      expect(`if (\n  ${long}\n)\n  bar;`).toMatchFormat();
     });
 
     test("break to flat", () => {
-      expect(`if (\n    foo\n) bar;`).toChangeFormat("if (foo) bar;");
+      expect(`if (\n  foo\n) bar;`).toChangeFormat("if (foo) bar;");
+    });
+
+    test("with else", () => {
+      expect("if (foo) bar; else baz;").toChangeFormat(`if (foo)\n  bar;\nelse\n  baz;`);
     });
   });
 

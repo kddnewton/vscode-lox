@@ -17,7 +17,7 @@ type Expression = Location & (
 type Statement = Location & (
   | { kind: "exprStmt", expr: Expression }
   | { kind: "printStmt", expr: Expression }
-  | { kind: "ifStmt", pred: Expression, stmt: Statement }
+  | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
   | { kind: "block", decls: Statement[] }
   | { kind: "varDecl", var: string, init: Expression | null }
 );
@@ -273,12 +273,20 @@ function parseIfStatement(parser: Parser): Statement {
   const predicate = parseExpression(parser);
   const statement = parseStatement(parser);
 
-  return {
+  const node: Statement = {
     kind: "ifStmt",
     pred: predicate,
     stmt: statement,
+    cons: null,
     loc: { start, end: statement.loc.end }
   };
+
+  if (match(parser, Token.ELSE)) {
+    node.cons = parseStatement(parser);
+    node.loc.end = node.cons.loc.end;
+  }
+
+  return node;
 }
 
 function parseBlock(parser: Parser): Statement {

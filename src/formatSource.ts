@@ -62,7 +62,7 @@ const printDecls: Printer["print"] = (path, opts, print) => {
   return parts;
 };
 
-const { align, group, hardline, line, indent, softline } = prettier.doc.builders;
+const { group, hardline, line, indent, softline } = prettier.doc.builders;
 
 const plugin: Plugin<AstNode> = {
   languages: [
@@ -118,14 +118,30 @@ const plugin: Plugin<AstNode> = {
             ]);
           case "exprStmt":
             return [path.call(print, "expr"), ";"];
-          case "ifStmt":
-            return group([
-              "if (",
-              align("if (".length, [softline, path.call(print, "pred")]),
-              softline,
-              ") ",
-              path.call(print, "stmt")
-            ]);
+          case "ifStmt": {
+            const parts: Doc[] = [
+              group([
+                "if (",
+                indent([softline, path.call(print, "pred")]),
+                softline,
+                ")"
+              ]),
+              indent([
+                node.stmt.kind === "block" ? " " : line,
+                path.call(print, "stmt")
+              ])
+            ];
+
+            if (node.cons) {
+              parts.push(
+                hardline,
+                "else",
+                indent([node.cons.kind === "block" ? " " : hardline, path.call(print, "cons")])
+              );
+            }
+
+            return group(parts);
+          }
           case "literal":
             return printLiteral(node);
           case "missing":
@@ -171,8 +187,14 @@ const plugin: Plugin<AstNode> = {
     case "printStmt":
     case "unary":
       return [node.expr];
-    case "ifStmt":
-      return [node.pred, node.stmt];
+    case "ifStmt": {
+      const childNodes = [node.pred, node.stmt];
+      if (node.cons) {
+        childNodes.push(node.cons);
+      }
+
+      return childNodes;
+    }
     case "literal":
     case "missing":
     case "variable":
