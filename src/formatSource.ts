@@ -97,6 +97,8 @@ const plugin: Plugin<AstNode> = {
             } else {
               return group(["\"", node.value, "\""]);
             }
+          case "missing":
+            return " ";
           case "printStmt":
             return group(["print ", path.call(print, "expr"), ";"]);
           case "unary":

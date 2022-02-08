@@ -6,6 +6,7 @@ import generateTokens, { Comment, GeneratedToken, Token, TokenGenerator } from "
 type Location = { loc: { start: number, end: number } };
 
 type Expression = Location & (
+  | { kind: "missing" }
   | { kind: "binary", left: Expression, oper: Token, right: Expression }
   | { kind: "literal", value: null | boolean | number | string }
   | { kind: "var", name: string }
