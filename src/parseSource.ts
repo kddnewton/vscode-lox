@@ -108,7 +108,7 @@ const parseRules: { [T in Token]: ParseRule<T> } = {
   [Token.IDENTIFIER]: { prefix: parseVariable, infix: null, prec: Precedence.NONE },
   [Token.STRING]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
   [Token.NUMBER]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
-  [Token.AND]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.AND]: { prefix: null, infix: parseLogicalAnd, prec: Precedence.AND },
   [Token.CLASS]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.ELSE]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.FALSE]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
@@ -116,7 +116,7 @@ const parseRules: { [T in Token]: ParseRule<T> } = {
   [Token.FUN]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.IF]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.NIL]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
-  [Token.OR]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.OR]: { prefix: null, infix: parseLogicalOr, prec: Precedence.OR },
   [Token.PRINT]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.RETURN]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.SUPER]: { prefix: null, infix: null, prec: Precedence.NONE },
@@ -226,6 +226,32 @@ function parseBinary(parser: Parser, left: Expression): Expression {
     kind: "binary",
     left,
     oper,
+    right,
+    loc: { start: left.loc.start, end: right.loc.end }
+  };
+}
+
+// node "and" node
+function parseLogicalAnd(parser: Parser, left: Expression): Expression {
+  const right = parsePrecedence(parser, Precedence.AND);
+
+  return {
+    kind: "binary",
+    left,
+    oper: Token.AND,
+    right,
+    loc: { start: left.loc.start, end: right.loc.end }
+  };
+}
+
+// node "or" node
+function parseLogicalOr(parser: Parser, left: Expression): Expression {
+  const right = parsePrecedence(parser, Precedence.OR);
+
+  return {
+    kind: "binary",
+    left,
+    oper: Token.OR,
     right,
     loc: { start: left.loc.start, end: right.loc.end }
   };

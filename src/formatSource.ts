@@ -16,6 +16,8 @@ export function printOperator(token: Token) {
     case Token.GREATER: return ">";
     case Token.LESS_EQUAL: return "<=";
     case Token.LESS: return "<";
+    case Token.AND: return "and";
+    case Token.OR: return "or";
     default:
       throw new Error(`Not an operator: ${Token[token]}`);
   }

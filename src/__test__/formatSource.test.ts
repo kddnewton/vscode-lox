@@ -83,7 +83,7 @@ describe("formatSource", () => {
       expect("1 + 2; // comment").toMatchFormat();
     });
 
-    test.each(["-", "+", "/", "*", "!=", "==", ">", ">=", "<", "<="])("%s", (operator) => {
+    test.each(["-", "+", "/", "*", "!=", "==", ">", ">=", "<", "<=", "or", "and"])("%s", (operator) => {
       expect(`1 ${operator} 2;`).toMatchFormat();
     });
   });
