@@ -78,18 +78,20 @@ function* generateTokens(source: string, onComment?: HandleComment): TokenGenera
       case "<": yield { kind: match("=") ? Token.LESS_EQUAL : Token.LESS, start, end: index, line }; break;
 
       case "\"": {
+        const startLine = line;
+
         while (source[index] !== "\"" && index < source.length) {
           line += source[index] === "\n" ? 1 : 0;
           index += 1;
         }
 
         if (index === source.length) {
-          yield { kind: Token.ERROR, start, end: index, line, error: TokenError.UNTERMINATED_STRING };
+          yield { kind: Token.ERROR, start, end: index, line: startLine, error: TokenError.UNTERMINATED_STRING };
           break;
         }
 
         index += 1;
-        yield { kind: Token.STRING, start, end: index, line, value: source.substring(start + 1, index - 1) };
+        yield { kind: Token.STRING, start, end: index, line: startLine, value: source.substring(start + 1, index - 1) };
         break;
       }
 

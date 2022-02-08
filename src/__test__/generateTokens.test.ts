@@ -74,6 +74,27 @@ describe("generateTokens", () => {
     });
   });
 
+  describe("strings", () => {
+    test("single line", () => {
+      expect("\"string\"").toMatchTokens(Token.STRING, Token.EOF);
+    });
+
+    test("multi line", () => {
+      const source = `
+        "string
+        "
+        "string
+        "
+      `;
+
+      expect(source).toMatchTokens(Token.STRING, Token.STRING, Token.EOF);
+
+      const tokens = getGeneratedTokens(source);
+      expect(tokens[0].line).toEqual(2);
+      expect(tokens[1].line).toEqual(4);
+    });
+  });
+
   describe("numbers", () => {
     test.each(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])("%s", (source) => {
       expect(source).toMatchTokens(Token.NUMBER, Token.EOF);
