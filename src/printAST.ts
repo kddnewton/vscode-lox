@@ -11,6 +11,8 @@ function printAST(node: AstNode): string {
       return `[${node.decls.map(printAST).join(", ")}]`;
     case "exprStmt":
       return printAST(node.expr);
+    case "ifStmt":
+      return `(if ${printAST(node.pred)} ${printAST(node.stmt)})`;
     case "literal":
       return printLiteral(node);
     case "missing":

@@ -47,6 +47,10 @@ describe("parseSource", () => {
     expect("1 * (2 + 3)").toMatchAST("[(* 1 (+ 2 3))]");
   });
 
+  test("ifStmt", () => {
+    expect("if (foo) bar;").toMatchAST("[(if (var foo) (var bar))]");
+  });
+
   test("printStmt", () => {
     expect("print foo;").toMatchAST("[(print (var foo))]");
   });

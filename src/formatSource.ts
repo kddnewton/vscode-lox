@@ -62,7 +62,7 @@ const printDecls: Printer["print"] = (path, opts, print) => {
   return parts;
 };
 
-const { group, hardline, line, indent } = prettier.doc.builders;
+const { align, group, hardline, line, indent, softline } = prettier.doc.builders;
 
 const plugin: Plugin<AstNode> = {
   languages: [
@@ -118,6 +118,14 @@ const plugin: Plugin<AstNode> = {
             ]);
           case "exprStmt":
             return [path.call(print, "expr"), ";"];
+          case "ifStmt":
+            return group([
+              "if (",
+              align("if (".length, [softline, path.call(print, "pred")]),
+              softline,
+              ") ",
+              path.call(print, "stmt")
+            ]);
           case "literal":
             return printLiteral(node);
           case "missing":
@@ -163,6 +171,8 @@ const plugin: Plugin<AstNode> = {
     case "printStmt":
     case "unary":
       return [node.expr];
+    case "ifStmt":
+      return [node.pred, node.stmt];
     case "literal":
     case "missing":
     case "variable":

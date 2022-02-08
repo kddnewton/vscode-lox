@@ -17,6 +17,7 @@ type Expression = Location & (
 type Statement = Location & (
   | { kind: "exprStmt", expr: Expression }
   | { kind: "printStmt", expr: Expression }
+  | { kind: "ifStmt", pred: Expression, stmt: Statement }
   | { kind: "block", decls: Statement[] }
   | { kind: "varDecl", var: string, init: Expression | null }
 );
@@ -156,7 +157,7 @@ function match(parser: Parser, token: Token) {
 // variable ("=" expression)?
 function parseVariable(parser: ParserWithPrevious<Token.IDENTIFIER>, { canAssign }: PrefixOptions): Expression {
   const variable: Expression = {
-    kind: "variable",
+    kind: "variable", 
     name: parser.previous.value,
     loc: { start: parser.previous.start, end: parser.previous.end }
   };
@@ -266,6 +267,20 @@ function parsePrintStatement(parser: Parser): Statement {
   return node;
 };
 
+function parseIfStatement(parser: Parser): Statement {
+  const { start } = parser.previous;
+
+  const predicate = parseExpression(parser);
+  const statement = parseStatement(parser);
+
+  return {
+    kind: "ifStmt",
+    pred: predicate,
+    stmt: statement,
+    loc: { start, end: statement.loc.end }
+  };
+}
+
 function parseBlock(parser: Parser): Statement {
   const node: Statement = {
     kind: "block",
@@ -286,6 +301,10 @@ function parseBlock(parser: Parser): Statement {
 function parseStatement(parser: Parser): Statement {
   if (match(parser, Token.PRINT)) {
     return parsePrintStatement(parser);
+  }
+
+  if (match(parser, Token.IF)) {
+    return parseIfStatement(parser);
   }
 
   if (match(parser, Token.LEFT_BRACE)) {

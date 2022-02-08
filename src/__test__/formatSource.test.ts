@@ -88,6 +88,24 @@ describe("formatSource", () => {
     });
   });
 
+  describe("ifStmt", () => {
+    test("flat to flat", () => {
+      expect("if (foo) bar;").toMatchFormat();
+    });
+
+    test("flat to break", () => {
+      expect(`if (${long}) bar;`).toChangeFormat(`if (\n    ${long}\n) bar;`);
+    });
+
+    test("break to break", () => {
+      expect(`if (\n    ${long}\n) bar;`).toMatchFormat();
+    });
+
+    test("break to flat", () => {
+      expect(`if (\n    foo\n) bar;`).toChangeFormat("if (foo) bar;");
+    });
+  });
+
   describe("literal", () => {
     test.each(["true", "false", "nil", "123", "\"abc\""])("%s", (literal) => {
       expect(`${literal};`).toMatchFormat();
