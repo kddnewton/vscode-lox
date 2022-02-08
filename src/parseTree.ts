@@ -7,9 +7,10 @@ type Location = { loc: { start: number, end: number } };
 
 type Expression = Location & (
   | { kind: "missing" }
+  | { kind: "assign", variable: Expression, expression: Expression }
   | { kind: "binary", left: Expression, oper: Token, right: Expression }
   | { kind: "literal", value: null | boolean | number | string }
-  | { kind: "var", name: string }
+  | { kind: "variable", name: string }
   | { kind: "unary", oper: Token, expr: Expression }
 );
 
@@ -65,8 +66,9 @@ class Parser {
 type ParserWithPrevious<T extends Token> = Parser & { previous: Omit<Parser["previous"], "kind"> & { kind: T } };
 enum Precedence { NONE, ASSIGNMENT, OR, AND, EQUALITY, COMPARISON, TERM, FACTOR, UNARY, CALL, PRIMARY };
 
+type PrefixOptions = { canAssign: boolean }
 type ParseRule<T extends Token> = {
-  prefix: ((parser: ParserWithPrevious<T>) => Expression) | null,
+  prefix: ((parser: ParserWithPrevious<T>, options: PrefixOptions) => Expression) | null,
   infix: ((parser: ParserWithPrevious<T>, left: Expression) => Expression) | null,
   prec: Precedence
 };
@@ -101,17 +103,7 @@ const parseRules: { [T in Token]: ParseRule<T> } = {
   [Token.GREATER_EQUAL]: { prefix: null, infix: parseBinary, prec: Precedence.COMPARISON },
   [Token.LESS]: { prefix: null, infix: parseBinary, prec: Precedence.COMPARISON },
   [Token.LESS_EQUAL]: { prefix: null, infix: parseBinary, prec: Precedence.COMPARISON },
-  [Token.IDENTIFIER]: {
-    prefix(parser) {
-      return {
-        kind: "var",
-        name: parser.previous.value,
-        loc: { start: parser.previous.start, end: parser.previous.end }
-      };
-    },
-    infix: null,
-    prec: Precedence.NONE
-  },
+  [Token.IDENTIFIER]: { prefix: parseVariable, infix: null, prec: Precedence.NONE },
   [Token.STRING]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
   [Token.NUMBER]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
   [Token.AND]: { prefix: null, infix: null, prec: Precedence.NONE },
@@ -158,6 +150,28 @@ function match(parser: Parser, token: Token) {
     return true;
   }
   return false;
+}
+
+// variable ("=" expression)?
+function parseVariable(parser: ParserWithPrevious<Token.IDENTIFIER>, { canAssign }: PrefixOptions): Expression {
+  const variable: Expression = {
+    kind: "variable",
+    name: parser.previous.value,
+    loc: { start: parser.previous.start, end: parser.previous.end }
+  };
+
+  if (canAssign && match(parser, Token.EQUAL)) {
+    const expression = parseExpression(parser);
+
+    return {
+      kind: "assign",
+      variable,
+      expression,
+      loc: { start: variable.loc.start, end: expression.loc.end }
+    };
+  }
+
+  return variable;
 }
 
 // false | true | nil | string | number
@@ -227,7 +241,7 @@ function parsePrecedence(parser: Parser, precedence: Precedence): Expression {
     throw new Error("Parse error.");
   }
 
-  let node = prefixRule(parser);
+  let node = prefixRule(parser, { canAssign: precedence <= Precedence.ASSIGNMENT });
   while (precedence <= parseRules[parser.current.kind].prec) {
     parser.advance();
 

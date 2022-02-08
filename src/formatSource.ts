@@ -103,7 +103,7 @@ const plugin: Plugin<AstNode> = {
             return group(["print ", path.call(print, "expr"), ";"]);
           case "unary":
             return group([printOperator(node.oper), path.call(print, "expr")]);
-          case "var":
+          case "variable":
             return node.name;
           case "varDecl":
             if (node.init) {
