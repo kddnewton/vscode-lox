@@ -143,9 +143,5 @@ describe("formatSource", () => {
     test("comment", () => {
       expect("var xxx = 1; // comment").toMatchFormat();
     });
-
-    test("comment on variable", () => {
-      expect("var xxx = // comment\n  1;").toMatchFormat();
-    });
   });
 });

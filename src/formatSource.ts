@@ -2,7 +2,7 @@ import prettier, { Doc, Plugin } from "prettier";
 import { Comment, Token } from "./generateTokens";
 import parseSource, { AstNode } from "./parseSource";
 
-function printOperator(token: Token) {
+export function printOperator(token: Token) {
   switch (token) {
     case Token.MINUS: return "-";
     case Token.PLUS: return "+";
@@ -18,6 +18,20 @@ function printOperator(token: Token) {
     case Token.LESS: return "<";
     default:
       throw new Error(`Not an operator: ${Token[token]}`);
+  }
+}
+
+export function printLiteral(node: AstNode & { kind: "literal" }) {
+  if (node.value === true) {
+    return "true";
+  } else if (node.value === false) {
+    return "false";
+  } else if (node.value === null) {
+    return "nil";
+  } else if (typeof node.value === "number") {
+    return node.value.toString();
+  } else {
+    return `"${node.value}"`;
   }
 }
 
@@ -71,17 +85,7 @@ const plugin: Plugin<AstNode> = {
           case "exprStmt":
             return [path.call(print, "expr"), ";"];
           case "literal":
-            if (node.value === true) {
-              return "true";
-            } else if (node.value === false) {
-              return "false";
-            } else if (node.value === null) {
-              return "nil";
-            } else if (typeof node.value === "number") {
-              return node.value.toString();
-            } else {
-              return group(["\"", node.value, "\""]);
-            }
+            return printLiteral(node);
           case "missing":
             return " ";
           case "printStmt":
