@@ -18,6 +18,7 @@ type Statement = Location & (
   | { kind: "exprStmt", expr: Expression }
   | { kind: "printStmt", expr: Expression }
   | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
+  | { kind: "whileStmt", pred: Expression, stmt: Statement }
   | { kind: "block", decls: Statement[] }
   | { kind: "varDecl", var: string, init: Expression | null }
 );
@@ -296,7 +297,10 @@ function parsePrintStatement(parser: Parser): Statement {
 function parseIfStatement(parser: Parser): Statement {
   const { start } = parser.previous;
 
+  consume(parser, Token.LEFT_PAREN, { start, end: parser.previous.end }, "Expect '(' after 'if'.");
   const predicate = parseExpression(parser);
+
+  consume(parser, Token.RIGHT_PAREN, { start, end: predicate.loc.end }, "Expect ')' after condition.");
   const statement = parseStatement(parser);
 
   const node: Statement = {
@@ -313,6 +317,23 @@ function parseIfStatement(parser: Parser): Statement {
   }
 
   return node;
+}
+
+function parseWhileStatement(parser: Parser): Statement {
+  const { start } = parser.previous;
+
+  consume(parser, Token.LEFT_PAREN, { start, end: parser.previous.end }, "Expect '(' after 'while'.");
+  const predicate = parseExpression(parser);
+
+  consume(parser, Token.RIGHT_PAREN, { start, end: predicate.loc.end }, "Expect ')' after condition.");
+  const statement = parseStatement(parser);
+
+  return {
+    kind: "whileStmt",
+    pred: predicate,
+    stmt: statement,
+    loc: { start, end: statement.loc.end }
+  };
 }
 
 function parseBlock(parser: Parser): Statement {
@@ -339,6 +360,10 @@ function parseStatement(parser: Parser): Statement {
 
   if (match(parser, Token.IF)) {
     return parseIfStatement(parser);
+  }
+
+  if (match(parser, Token.WHILE)) {
+    return parseWhileStatement(parser);
   }
 
   if (match(parser, Token.LEFT_BRACE)) {

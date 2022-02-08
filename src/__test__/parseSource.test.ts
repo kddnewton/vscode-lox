@@ -68,4 +68,8 @@ describe("parseSource", () => {
   test("varDecl", () => {
     expect("var foo = bar;").toMatchAST("[(varDecl foo (var bar))]");
   });
+
+  test("whileStmt", () => {
+    expect("while (foo) bar;").toMatchAST("[(while (var foo) (var bar))]");
+  });
 });

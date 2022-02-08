@@ -184,4 +184,22 @@ describe("formatSource", () => {
       expect("var xxx = 1; // comment").toMatchFormat();
     });
   });
+
+  describe("whileStmt", () => {
+    test("flat to flat", () => {
+      expect("while (foo) bar;").toMatchFormat();
+    });
+
+    test("flat to break", () => {
+      expect(`while (${long}) bar;`).toChangeFormat(`while (\n  ${long}\n)\n  bar;`);
+    });
+
+    test("break to break", () => {
+      expect(`while (\n  ${long}\n)\n  bar;`).toMatchFormat();
+    });
+
+    test("break to flat", () => {
+      expect(`while (\n  foo\n) bar;`).toChangeFormat("while (foo) bar;");
+    });
+  });
 });

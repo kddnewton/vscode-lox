@@ -136,7 +136,7 @@ const plugin: Plugin<AstNode> = {
 
             if (node.cons) {
               parts.push(
-                hardline,
+                node.stmt.kind === "block" ? " " : hardline,
                 "else",
                 indent([node.cons.kind === "block" ? " " : hardline, path.call(print, "cons")])
               );
@@ -162,6 +162,19 @@ const plugin: Plugin<AstNode> = {
             } else {
               return group(["var ", node.var, ";"]);
             }
+          case "whileStmt":
+            return group([
+              group([
+                "while (",
+                indent([softline, path.call(print, "pred")]),
+                softline,
+                ")"
+              ]),
+              indent([
+                node.stmt.kind === "block" ? " " : line,
+                path.call(print, "stmt")
+              ])
+            ]);
         }
       },
       printComment(path) {
@@ -209,6 +222,8 @@ const plugin: Plugin<AstNode> = {
 
       return childNodes;
     }
+    case "whileStmt":
+      return [node.pred, node.stmt];
   }
 };
 

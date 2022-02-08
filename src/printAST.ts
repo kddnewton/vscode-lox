@@ -35,6 +35,8 @@ function printAST(node: AstNode): string {
       }
     case "variable":
       return `(var ${node.name})`;
+    case "whileStmt":
+      return `(while ${printAST(node.pred)} ${printAST(node.stmt)})`;
   }
 }
 
