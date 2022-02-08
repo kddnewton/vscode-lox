@@ -2,8 +2,9 @@
 
 import fs from "fs";
 import parseSource from "../src/parseSource";
+import printAST from "../src/printAST";
 
 const source = fs.readFileSync(process.argv[2], "utf-8");
 const { scope } = parseSource(source);
 
-console.log(JSON.stringify(scope, null, 2));
+console.log(printAST(scope));
