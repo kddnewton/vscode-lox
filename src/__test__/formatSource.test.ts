@@ -44,6 +44,24 @@ describe("formatSource", () => {
     });
   });
 
+  describe("block", () => {
+    test("flat to flat", () => {
+      expect("{ 1 + 2; }").toMatchFormat();
+    });
+
+    test("flat to break", () => {
+      expect("{ 1 + 2; 3 + 4; }").toChangeFormat("{\n  1 + 2;\n  3 + 4;\n}");
+    });
+
+    test("break to break", () => {
+      expect("{\n  1 + 2;\n  3 + 4;\n}").toMatchFormat();
+    });
+
+    test("break to flat", () => {
+      expect("{\n  1 + 2;\n}").toChangeFormat("{ 1 + 2; }");
+    });
+  });
+
   describe("binary", () => {
     test("flat to flat", () => {
       expect("1 + 2;").toMatchFormat();

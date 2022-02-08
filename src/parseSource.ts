@@ -17,6 +17,7 @@ type Expression = Location & (
 type Statement = Location & (
   | { kind: "exprStmt", expr: Expression }
   | { kind: "printStmt", expr: Expression }
+  | { kind: "block", decls: Statement[] }
   | { kind: "varDecl", var: string, init: Expression | null }
 );
 
@@ -253,7 +254,7 @@ function parseExpression(parser: Parser): Expression {
 }
 
 // "print" expression ";"
-function printStatement(parser: Parser): Statement {
+function parsePrintStatement(parser: Parser): Statement {
   const node: Statement = {
     kind: "printStmt",
     expr: parseExpression(parser),
@@ -265,9 +266,30 @@ function printStatement(parser: Parser): Statement {
   return node;
 };
 
+function parseBlock(parser: Parser): Statement {
+  const node: Statement = {
+    kind: "block",
+    decls: [],
+    loc: { start: parser.previous.start, end: parser.previous.end }
+  };
+
+  while (parser.current.kind !== Token.RIGHT_BRACE && parser.current.kind !== Token.EOF) {
+    const declaration = parseDeclaration(parser);
+    node.loc.end = declaration.loc.end;
+    node.decls.push(declaration);
+  }
+
+  consume(parser, Token.RIGHT_BRACE, node.loc, "Expect '}' after block.");
+  return node;
+}
+
 function parseStatement(parser: Parser): Statement {
   if (match(parser, Token.PRINT)) {
-    return printStatement(parser);
+    return parsePrintStatement(parser);
+  }
+
+  if (match(parser, Token.LEFT_BRACE)) {
+    return parseBlock(parser);
   }
 
   const expr = parseExpression(parser);

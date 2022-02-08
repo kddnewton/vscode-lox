@@ -7,6 +7,8 @@ function printAST(node: AstNode): string {
       return `(assign ${printAST(node.variable)} ${printAST(node.expression)})`;
     case "binary":
       return `(${printOperator(node.oper)} ${printAST(node.left)} ${printAST(node.right)})`;
+    case "block":
+      return `[${node.decls.map(printAST).join(", ")}]`;
     case "exprStmt":
       return printAST(node.expr);
     case "literal":

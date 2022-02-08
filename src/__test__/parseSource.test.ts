@@ -33,6 +33,16 @@ describe("parseSource", () => {
     expect("1 + 2 * 3").toMatchAST("[(+ 1 (* 2 3))]");
   });
 
+  test("block", () => {
+    const source = `
+      {
+        1 + 2;
+      }
+    `;
+
+    expect(source).toMatchAST("[[(+ 1 2)]]");
+  });
+
   test("grouping", () => {
     expect("1 * (2 + 3)").toMatchAST("[(* 1 (+ 2 3))]");
   });

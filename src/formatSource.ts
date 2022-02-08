@@ -1,4 +1,4 @@
-import prettier, { Doc, Plugin } from "prettier";
+import prettier, { Doc, Plugin, Printer } from "prettier";
 import { Comment, Token } from "./generateTokens";
 import parseSource, { AstNode } from "./parseSource";
 
@@ -34,6 +34,33 @@ export function printLiteral(node: AstNode & { kind: "literal" }) {
     return `"${node.value}"`;
   }
 }
+
+const printDecls: Printer["print"] = (path, opts, print) => {
+  const node = path.getValue();
+  if (node.decls.length === 0) {
+    return [];
+  }
+
+  const parts: Doc = [];
+  let previous: number | null = null;
+
+  path.each((declPath) => {
+    const decl = declPath.getValue();
+
+    if (previous !== null) {
+      parts.push(hardline);
+
+      if (decl.loc.start < previous || opts.originalText.substring(previous, decl.loc.start).split("\n").length > 2) {
+        parts.push(hardline);
+      }
+    }
+
+    parts.push(print(declPath));
+    previous = decl.loc.end;
+  }, "decls");
+
+  return parts;
+};
 
 const { group, hardline, line, indent } = prettier.doc.builders;
 
@@ -82,6 +109,13 @@ const plugin: Plugin<AstNode> = {
               printOperator(node.oper),
               indent([line, path.call(print, "right")])
             ]);
+          case "block":
+            return group([
+              "{",
+              indent([line, printDecls(path, opts, print)]),
+              line,
+              "}"
+            ]);
           case "exprStmt":
             return [path.call(print, "expr"), ";"];
           case "literal":
@@ -90,27 +124,8 @@ const plugin: Plugin<AstNode> = {
             return " ";
           case "printStmt":
             return group(["print ", path.call(print, "expr"), ";"]);
-          case "scope": {
-            const parts: Doc = [];
-            let previous: number = 0;
-
-            path.each((declPath) => {
-              const decl = declPath.getValue();
-
-              if (previous !== 0) {
-                parts.push(hardline);
-              }
-
-              if (decl.loc.start < previous || opts.originalText.substring(previous, decl.loc.start).split("\n").length > 2) {
-                parts.push(hardline);
-              }
-
-              parts.push(print(declPath));
-              previous = decl.loc.end;
-            }, "decls");
-
-            return [parts, hardline];
-          }
+          case "scope":
+            return [printDecls(path, opts, print), hardline];
           case "unary":
             return group([printOperator(node.oper), path.call(print, "expr")]);
           case "variable":
@@ -141,6 +156,9 @@ const plugin: Plugin<AstNode> = {
       return [node.variable, node.expression];
     case "binary":
       return [node.left, node.right];
+    case "block":
+    case "scope":
+      return node.decls;
     case "exprStmt":
     case "printStmt":
     case "unary":
@@ -149,8 +167,6 @@ const plugin: Plugin<AstNode> = {
     case "missing":
     case "variable":
       return [];
-    case "scope":
-      return node.decls;
     case "varDecl": {
       const childNodes = [];
       if (node.init) {
