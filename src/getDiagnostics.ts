@@ -1,7 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver/node";
 import generateTokens, { Token, TokenError } from "./generateTokens";
-import parseTree from "./parseTree";
+import parseSource from "./parseSource";
 
 function getTokenErrorMessage(tokenError: TokenError) {
   switch (tokenError) {
@@ -35,7 +35,7 @@ function getDiagnostics(textDocument: TextDocument): Diagnostic[] {
     }
   }
 
-  const { parser } = parseTree(textDocument.getText());
+  const { parser } = parseSource(textDocument.getText());
   for (const missing of parser.missingTokens) {
     diagnostics.push({
       severity: DiagnosticSeverity.Error,

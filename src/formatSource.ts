@@ -1,6 +1,6 @@
 import prettier, { Doc, Plugin } from "prettier";
 import { Comment, Token } from "./generateTokens";
-import parseTree, { AstNode } from "./parseTree";
+import parseSource, { AstNode } from "./parseSource";
 
 function printOperator(token: Token) {
   switch (token) {
@@ -34,7 +34,7 @@ const plugin: Plugin<AstNode> = {
   parsers: {
     lox: {
       parse(source) {
-        const { parser, scope } = parseTree(source);
+        const { parser, scope } = parseSource(source);
         return { ...scope, comments: parser.comments };
       },
       astFormat: "lox",
@@ -68,7 +68,25 @@ const plugin: Plugin<AstNode> = {
               printOperator(node.oper),
               indent([line, path.call(print, "right")])
             ]);
-          case "decls": {
+          case "exprStmt":
+            return [path.call(print, "expr"), ";"];
+          case "literal":
+            if (node.value === true) {
+              return "true";
+            } else if (node.value === false) {
+              return "false";
+            } else if (node.value === null) {
+              return "nil";
+            } else if (typeof node.value === "number") {
+              return node.value.toString();
+            } else {
+              return group(["\"", node.value, "\""]);
+            }
+          case "missing":
+            return " ";
+          case "printStmt":
+            return group(["print ", path.call(print, "expr"), ";"]);
+          case "scope": {
             const parts: Doc = [];
             let previous: number = 0;
 
@@ -89,24 +107,6 @@ const plugin: Plugin<AstNode> = {
 
             return [parts, hardline];
           }
-          case "exprStmt":
-            return [path.call(print, "expr"), ";"];
-          case "literal":
-            if (node.value === true) {
-              return "true";
-            } else if (node.value === false) {
-              return "false";
-            } else if (node.value === null) {
-              return "null";
-            } else if (typeof node.value === "number") {
-              return node.value.toString();
-            } else {
-              return group(["\"", node.value, "\""]);
-            }
-          case "missing":
-            return " ";
-          case "printStmt":
-            return group(["print ", path.call(print, "expr"), ";"]);
           case "unary":
             return group([printOperator(node.oper), path.call(print, "expr")]);
           case "variable":
@@ -131,21 +131,30 @@ const plugin: Plugin<AstNode> = {
 };
 
 // Doing it this way since @types/prettier is missing this declaration.
-(plugin as any).printers.lox.getCommentChildNodes = (node: AstNode) => {
+(plugin as any).printers.lox.getCommentChildNodes = (node: AstNode): AstNode[] => {
   switch (node.kind) {
+    case "assign":
+      return [node.variable, node.expression];
     case "binary":
       return [node.left, node.right];
-    case "decls":
-      return node.decls;
     case "exprStmt":
     case "printStmt":
     case "unary":
       return [node.expr];
     case "literal":
+    case "missing":
     case "variable":
       return [];
-    case "varDecl":
-      return [node.init];
+    case "scope":
+      return node.decls;
+    case "varDecl": {
+      const childNodes = [];
+      if (node.init) {
+        childNodes.push(node.init);
+      }
+
+      return childNodes;
+    }
   }
 };
 
