@@ -156,7 +156,7 @@ export type FormatOptions = {
   tabSize: number
 };
 
-function formatSource(source: string, options: FormatOptions) {
+function formatSource(source: string, options: FormatOptions = { insertSpaces: true, tabSize: 2 }) {
   return prettier.format(source, {
     parser: "lox",
     plugins: [plugin],
