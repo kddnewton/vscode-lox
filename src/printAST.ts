@@ -22,6 +22,10 @@ function printAST(node: AstNode): string {
         ast = `${ast} ${printAST(node.cond)}`;
       }
 
+      if (node.incr) {
+        ast = `${ast} ${printAST(node.incr)}`;
+      }
+
       return `${ast} ${printAST(node.stmt)})`;
     }
     case "ifStmt": {

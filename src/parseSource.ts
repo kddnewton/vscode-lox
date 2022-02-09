@@ -17,7 +17,7 @@ type Expression = Location & (
 type Statement = Location & (
   | { kind: "block", decls: Statement[] }
   | { kind: "exprStmt", expr: Expression }
-  | { kind: "forStmt", init: Statement | null, cond: Expression | null, stmt: Statement }
+  | { kind: "forStmt", init: Statement | null, cond: Expression | null, incr: Expression | null, stmt: Statement }
   | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
   | { kind: "printStmt", expr: Expression }
   | { kind: "varDecl", var: string, init: Expression | null }
@@ -314,13 +314,19 @@ function parseForStatement(parser: Parser): Statement {
     consume(parser, Token.SEMICOLON, { start, end: condition.loc.end }, "Expect ';' after loop condition.");
   }
 
-  consume(parser, Token.RIGHT_PAREN, { start, end: parser.previous.end }, "Expect ')' after for clauses.");
+  let increment: Expression | null = null;
+  if (!match(parser, Token.RIGHT_PAREN)) {
+    increment = parseExpression(parser);
+    consume(parser, Token.RIGHT_PAREN, { start, end: increment.loc.end }, "Expect ')' after for clauses.");
+  }
+
   const statement = parseStatement(parser);
 
   return {
     kind: "forStmt",
     init: initializer,
     cond: condition,
+    incr: increment,
     stmt: statement,
     loc: { start, end: statement.loc.end }
   };

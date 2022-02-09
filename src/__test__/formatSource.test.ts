@@ -90,19 +90,27 @@ describe("formatSource", () => {
 
   describe("forStmt", () => {
     test("nothing", () => {
-      expect("for (;;) 1;").toMatchFormat();
+      expect("for (;;) i;").toMatchFormat();
     });
 
     test("initializer", () => {
-      expect("for (var i = 0;;) 1;").toMatchFormat();
+      expect("for (var i = 0;;) i;").toMatchFormat();
     });
 
     test("condition", () => {
-      expect("for (; i < 10;) 1;").toMatchFormat();
+      expect("for (; i < 10;) i;").toMatchFormat();
     });
 
     test("initializer and condition", () => {
-      expect("for (var i = 0; i < 10;) 1;").toMatchFormat();
+      expect("for (var i = 0; i < 10;) i;").toMatchFormat();
+    });
+
+    test("increment", () => {
+      expect("for (;; i = i + 1) i;").toMatchFormat();
+    });
+  
+    test("everything", () => {
+      expect("for (var i = 0; i < 10; i = i + 1) i;").toMatchFormat();
     });
   });
 

@@ -59,6 +59,10 @@ describe("parseSource", () => {
     test("initializer and condition", () => {
       expect("for (var i = 0; i < 10;) 1;").toMatchAST("[(for (varDecl i 0) (< (var i) 10) 1)]");
     });
+
+    test("increment", () => {
+      expect("for (;; i = i + 1) 1;").toMatchAST("[(for (assign (var i) (+ (var i) 1)) 1)]");
+    });
   });
 
   test("grouping", () => {
