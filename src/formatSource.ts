@@ -120,6 +120,17 @@ const plugin: Plugin<AstNode> = {
             ]);
           case "exprStmt":
             return [path.call(print, "expr"), ";"];
+          case "forStmt": {
+            const parts: Doc[] = [
+              group(["for (;;)"]),
+              indent([
+                node.stmt.kind === "block" ? " " : line,
+                path.call(print, "stmt")
+              ])
+            ];
+
+            return group(parts);
+          }
           case "ifStmt": {
             const parts: Doc[] = [
               group([
@@ -202,6 +213,8 @@ const plugin: Plugin<AstNode> = {
     case "printStmt":
     case "unary":
       return [node.expr];
+    case "forStmt":
+      return [node.stmt];
     case "ifStmt": {
       const childNodes = [node.pred, node.stmt];
       if (node.cons) {

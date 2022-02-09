@@ -15,12 +15,13 @@ type Expression = Location & (
 );
 
 type Statement = Location & (
-  | { kind: "exprStmt", expr: Expression }
-  | { kind: "printStmt", expr: Expression }
-  | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
-  | { kind: "whileStmt", pred: Expression, stmt: Statement }
   | { kind: "block", decls: Statement[] }
+  | { kind: "exprStmt", expr: Expression }
+  | { kind: "forStmt", stmt: Statement }
+  | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
+  | { kind: "printStmt", expr: Expression }
   | { kind: "varDecl", var: string, init: Expression | null }
+  | { kind: "whileStmt", pred: Expression, stmt: Statement }
 );
 
 type Scope = Location & (
@@ -294,6 +295,22 @@ function parsePrintStatement(parser: Parser): Statement {
   return node;
 };
 
+function parseForStatement(parser: Parser): Statement {
+  const { start } = parser.previous;
+
+  consume(parser, Token.LEFT_PAREN, { start, end: parser.previous.end }, "Expect '(' after 'for'.");
+  consume(parser as ParserWithPrevious<Token>, Token.SEMICOLON, { start, end: parser.previous.end }, "Expect ';'.");
+  consume(parser as ParserWithPrevious<Token>, Token.SEMICOLON, { start, end: parser.previous.end }, "Expect ';'.")
+  consume(parser, Token.RIGHT_PAREN, { start, end: parser.previous.end }, "Expect ')' after for clauses.");
+  const statement = parseStatement(parser);
+
+  return {
+    kind: "forStmt",
+    stmt: statement,
+    loc: { start, end: statement.loc.end }
+  };
+}
+
 function parseIfStatement(parser: Parser): Statement {
   const { start } = parser.previous;
 
@@ -356,6 +373,10 @@ function parseBlock(parser: Parser): Statement {
 function parseStatement(parser: Parser): Statement {
   if (match(parser, Token.PRINT)) {
     return parsePrintStatement(parser);
+  }
+
+  if (match(parser, Token.FOR)) {
+    return parseForStatement(parser);
   }
 
   if (match(parser, Token.IF)) {

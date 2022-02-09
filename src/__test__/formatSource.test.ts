@@ -88,6 +88,12 @@ describe("formatSource", () => {
     });
   });
 
+  describe("forStmt", () => {
+    test("flat to flat", () => {
+      expect("for (;;) 1;").toMatchFormat();
+    });
+  });
+
   describe("ifStmt", () => {
     test("flat to flat", () => {
       expect("if (foo) bar;").toMatchFormat();

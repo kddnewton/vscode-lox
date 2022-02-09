@@ -43,6 +43,12 @@ describe("parseSource", () => {
     expect(source).toMatchAST("[[(+ 1 2)]]");
   });
 
+  describe("forStmt", () => {
+    test("nothing", () => {
+      expect("for (;;) 1;").toMatchAST("[(for 1)]");
+    });
+  });
+
   test("grouping", () => {
     expect("1 * (2 + 3)").toMatchAST("[(* 1 (+ 2 3))]");
   });

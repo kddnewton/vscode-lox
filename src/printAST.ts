@@ -11,12 +11,20 @@ function printAST(node: AstNode): string {
       return `[${node.decls.map(printAST).join(", ")}]`;
     case "exprStmt":
       return printAST(node.expr);
-    case "ifStmt":
+    case "forStmt": {
+      let ast = `(for`;
+
+      return `${ast} ${printAST(node.stmt)})`;
+    }
+    case "ifStmt": {
+      let ast = `(if ${printAST(node.pred)} ${printAST(node.stmt)}`;
+
       if (node.cons) {
-        return `(if ${printAST(node.pred)} ${printAST(node.stmt)} ${printAST(node.cons)})`;
-      } else {
-        return `(if ${printAST(node.pred)} ${printAST(node.stmt)})`;
+        ast = `${ast} ${printAST(node.cons)}`;
       }
+
+      return `${ast})`;
+    }
     case "literal":
       return printLiteral(node);
     case "missing":
