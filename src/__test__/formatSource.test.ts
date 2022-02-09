@@ -96,6 +96,14 @@ describe("formatSource", () => {
     test("initializer", () => {
       expect("for (var i = 0;;) 1;").toMatchFormat();
     });
+
+    test("condition", () => {
+      expect("for (; i < 10;) 1;").toMatchFormat();
+    });
+
+    test("initializer and condition", () => {
+      expect("for (var i = 0; i < 10;) 1;").toMatchFormat();
+    });
   });
 
   describe("ifStmt", () => {

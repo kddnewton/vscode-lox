@@ -127,7 +127,7 @@ const plugin: Plugin<AstNode> = {
                 indent([
                   softline,
                   node.init ? path.call(print, "init") : ";",
-                  ";"
+                  node.cond ? [line, path.call(print, "cond"), ";"] : ";"
                 ]),
                 ")"
               ]),
@@ -226,6 +226,10 @@ const plugin: Plugin<AstNode> = {
 
       if (node.init) {
         childNodes.push(node.init);
+      }
+
+      if (node.cond) {
+        childNodes.push(node.cond);
       }
 
       childNodes.push(node.stmt);

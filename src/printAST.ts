@@ -18,6 +18,10 @@ function printAST(node: AstNode): string {
         ast = `${ast} ${printAST(node.init)}`;
       }
 
+      if (node.cond) {
+        ast = `${ast} ${printAST(node.cond)}`;
+      }
+
       return `${ast} ${printAST(node.stmt)})`;
     }
     case "ifStmt": {
