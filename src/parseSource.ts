@@ -17,7 +17,7 @@ type Expression = Location & (
 type Statement = Location & (
   | { kind: "block", decls: Statement[] }
   | { kind: "exprStmt", expr: Expression }
-  | { kind: "forStmt", stmt: Statement }
+  | { kind: "forStmt", init: Statement | null, stmt: Statement }
   | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
   | { kind: "printStmt", expr: Expression }
   | { kind: "varDecl", var: string, init: Expression | null }
@@ -297,15 +297,24 @@ function parsePrintStatement(parser: Parser): Statement {
 
 function parseForStatement(parser: Parser): Statement {
   const { start } = parser.previous;
-
   consume(parser, Token.LEFT_PAREN, { start, end: parser.previous.end }, "Expect '(' after 'for'.");
-  consume(parser as ParserWithPrevious<Token>, Token.SEMICOLON, { start, end: parser.previous.end }, "Expect ';'.");
+
+  let initializer: Statement | null = null;
+  if (match(parser, Token.SEMICOLON)) {
+    // No initializer
+  } else if (match(parser, Token.VAR)) {
+    initializer = parseVarDeclaration(parser);
+  } else {
+    initializer = parseExpressionStatement(parser);
+  }
+
   consume(parser as ParserWithPrevious<Token>, Token.SEMICOLON, { start, end: parser.previous.end }, "Expect ';'.")
   consume(parser, Token.RIGHT_PAREN, { start, end: parser.previous.end }, "Expect ')' after for clauses.");
   const statement = parseStatement(parser);
 
   return {
     kind: "forStmt",
+    init: initializer,
     stmt: statement,
     loc: { start, end: statement.loc.end }
   };
@@ -370,6 +379,17 @@ function parseBlock(parser: Parser): Statement {
   return node;
 }
 
+function parseExpressionStatement(parser: Parser): Statement {
+  const expression = parseExpression(parser);
+  consume(parser, Token.SEMICOLON, expression.loc, "Expect ';' after expression.");
+
+  return {
+    kind: "exprStmt",
+    expr: expression,
+    loc: { start: expression.loc.start, end: parser.previous.end }
+  };
+}
+
 function parseStatement(parser: Parser): Statement {
   if (match(parser, Token.PRINT)) {
     return parsePrintStatement(parser);
@@ -391,11 +411,7 @@ function parseStatement(parser: Parser): Statement {
     return parseBlock(parser);
   }
 
-  const expr = parseExpression(parser);
-  consume(parser, Token.SEMICOLON, expr.loc, "Expect ';' after expression.");
-
-  expr.loc.end = parser.previous.end;
-  return { kind: "exprStmt", expr, loc: expr.loc };
+  return parseExpressionStatement(parser);
 }
 
 // "var" variable ("=" expression)? ";"

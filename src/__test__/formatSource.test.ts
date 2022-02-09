@@ -89,8 +89,12 @@ describe("formatSource", () => {
   });
 
   describe("forStmt", () => {
-    test("flat to flat", () => {
+    test("nothing", () => {
       expect("for (;;) 1;").toMatchFormat();
+    });
+
+    test("initializer", () => {
+      expect("for (var i = 0;;) 1;").toMatchFormat();
     });
   });
 

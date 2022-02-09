@@ -47,6 +47,10 @@ describe("parseSource", () => {
     test("nothing", () => {
       expect("for (;;) 1;").toMatchAST("[(for 1)]");
     });
+
+    test("initializer", () => {
+      expect("for (var i = 0;;) 1;").toMatchAST("[(for (varDecl i 0) 1)]");
+    });
   });
 
   test("grouping", () => {

@@ -14,6 +14,10 @@ function printAST(node: AstNode): string {
     case "forStmt": {
       let ast = `(for`;
 
+      if (node.init) {
+        ast = `${ast} ${printAST(node.init)}`;
+      }
+
       return `${ast} ${printAST(node.stmt)})`;
     }
     case "ifStmt": {
