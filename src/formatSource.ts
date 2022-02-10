@@ -126,6 +126,8 @@ const plugin: Plugin<AstNode> = {
               softline,
               ")"
             ]);
+          case "classDecl":
+            return `class ${node.name} {}`;
           case "exprStmt":
             return [path.call(print, "expr"), ";"];
           case "forStmt": {
@@ -258,6 +260,8 @@ const plugin: Plugin<AstNode> = {
       return node.decls;
     case "call":
       return [node.recv, ...node.args];
+    case "classDecl":
+      return [];
     case "exprStmt":
     case "printStmt":
     case "unary":

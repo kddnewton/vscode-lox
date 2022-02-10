@@ -53,6 +53,12 @@ describe("parseSource", () => {
     });
   });
 
+  describe("classDecl", () => {
+    test("plain", () => {
+      expect("class Foo {}").toMatchAST("[(class Foo)]");
+    });
+  });
+
   describe("forStmt", () => {
     test("nothing", () => {
       expect("for (;;) 1;").toMatchAST("[(for 1)]");

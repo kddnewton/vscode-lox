@@ -11,6 +11,8 @@ function printAST(node: AstNode): string {
       return `[${node.decls.map(printAST).join(", ")}]`;
     case "call":
       return `(call ${printAST(node.recv)} [${node.args.map(printAST).join(", ")}])`;
+    case "classDecl":
+      return `(class ${node.name})`;
     case "exprStmt":
       return printAST(node.expr);
     case "forStmt": {

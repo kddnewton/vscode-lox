@@ -106,6 +106,12 @@ describe("formatSource", () => {
     });
   });
 
+  describe("classDecl", () => {
+    test("plain", () => {
+      expect("class Foo {}").toMatchFormat();
+    });
+  });
+
   describe("forStmt", () => {
     test("nothing", () => {
       expect("for (;;) i;").toMatchFormat();

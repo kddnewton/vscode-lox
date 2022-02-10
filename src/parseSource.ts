@@ -17,6 +17,7 @@ type Expression = Location & (
 
 type Statement = Location & (
   | { kind: "block", decls: Statement[] }
+  | { kind: "classDecl", name: string }
   | { kind: "exprStmt", expr: Expression }
   | { kind: "forStmt", init: Statement | null, cond: Expression | null, incr: Expression | null, stmt: Statement }
   | { kind: "funDecl", name: Expression, params: Expression[], block: Statement }
@@ -475,8 +476,24 @@ function parseStatement(parser: Parser): Statement {
   return parseExpressionStatement(parser);
 }
 
+function parseClassDeclaration(parser: Parser): Statement {
+  const { start } = parser.previous;
+
+  consume(parser, Token.IDENTIFIER, parser.previous, "Expect class name.");
+  const name = parser.previous.value;
+
+  consume(parser as ParserWithPrevious<Token>, Token.LEFT_BRACE, parser.previous, "Expect '{' after class declaration.");
+  consume(parser as ParserWithPrevious<Token>, Token.RIGHT_BRACE, parser.previous, "Expect '}' after class body.");
+  
+  return {
+    kind: "classDecl",
+    name,
+    loc: { start, end: parser.previous.end }
+  };
+}
+
 function parseFunctionDeclaration(parser: Parser): Statement {
-  const start = parser.previous.start;
+  const { start } = parser.previous;
   consume(parser, Token.IDENTIFIER, parser.previous, "Expect name after 'fun' keyword.");
 
   const name = parseVariable(parser, { canAssign: false });
@@ -530,6 +547,10 @@ function parseVarDeclaration(parser: Parser): Statement {
 
 // Parse an individual declaration within a scope.
 function parseDeclaration(parser: Parser): Statement {
+  if (match(parser, Token.CLASS)) {
+    return parseClassDeclaration(parser);
+  }
+
   if (match(parser, Token.FUN)) {
     return parseFunctionDeclaration(parser);
   }

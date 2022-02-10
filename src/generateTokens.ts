@@ -107,7 +107,7 @@ function* generateTokens(source: string, onComment?: HandleComment): TokenGenera
       }
 
       default: {
-        const pattern = new RegExp(/[a-z_][A-Za-z0-9]*/, "g");
+        const pattern = new RegExp(/[A-Za-z_][A-Za-z0-9_]*/, "g");
         pattern.lastIndex = index - 1;
 
         const matched = pattern.exec(source);
