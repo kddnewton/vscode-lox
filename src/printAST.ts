@@ -28,6 +28,8 @@ function printAST(node: AstNode): string {
 
       return `${ast} ${printAST(node.stmt)})`;
     }
+    case "funDecl":
+      return `(fun ${printAST(node.name)} ${printAST(node.block)})`;
     case "ifStmt": {
       let ast = `(if ${printAST(node.pred)} ${printAST(node.stmt)}`;
 

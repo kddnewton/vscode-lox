@@ -140,6 +140,18 @@ const plugin: Plugin<AstNode> = {
 
             return group(parts);
           }
+          case "funDecl":
+            return group([
+              group([
+                group(["fun ", path.call(print, "name")]),
+                " (",
+                indent([softline]),
+                softline,
+                ")"
+              ]),
+              " ",
+              path.call(print, "block")
+            ]);
           case "ifStmt": {
             const parts: Doc[] = [
               group([
@@ -240,6 +252,8 @@ const plugin: Plugin<AstNode> = {
       childNodes.push(node.stmt);
       return childNodes;
     }
+    case "funDecl":
+      return [node.name, node.block];
     case "ifStmt": {
       const childNodes = [node.pred, node.stmt];
       if (node.cons) {

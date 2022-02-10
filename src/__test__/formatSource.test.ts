@@ -114,6 +114,12 @@ describe("formatSource", () => {
     });
   });
 
+  describe("funDecl", () => {
+    test("plain", () => {
+      expect("fun foo () { 1; }").toMatchFormat();
+    });
+  });
+
   describe("ifStmt", () => {
     test("flat to flat", () => {
       expect("if (foo) bar;").toMatchFormat();

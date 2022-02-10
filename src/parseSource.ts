@@ -18,6 +18,7 @@ type Statement = Location & (
   | { kind: "block", decls: Statement[] }
   | { kind: "exprStmt", expr: Expression }
   | { kind: "forStmt", init: Statement | null, cond: Expression | null, incr: Expression | null, stmt: Statement }
+  | { kind: "funDecl", name: Expression, block: Statement }
   | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
   | { kind: "printStmt", expr: Expression }
   | { kind: "varDecl", var: string, init: Expression | null }
@@ -156,8 +157,16 @@ function match(parser: Parser, token: Token) {
   return false;
 }
 
+function assertPrevious<T extends Token>(parser: Parser, token: T): asserts parser is ParserWithPrevious<T> {
+  if (parser.previous.kind !== token) {
+    throw new Error("Parse error.");
+  }
+}
+
 // variable ("=" expression)?
-function parseVariable(parser: ParserWithPrevious<Token.IDENTIFIER>, { canAssign }: PrefixOptions): Expression {
+function parseVariable(parser: Parser, { canAssign }: PrefixOptions): Expression {
+  assertPrevious(parser, Token.IDENTIFIER);
+
   const variable: Expression = {
     kind: "variable", 
     name: parser.previous.value,
@@ -426,6 +435,26 @@ function parseStatement(parser: Parser): Statement {
   return parseExpressionStatement(parser);
 }
 
+function parseFunctionDeclaration(parser: Parser): Statement {
+  const start = parser.previous.start;
+
+  consume(parser, Token.IDENTIFIER, parser.previous, "Expect name after 'fun' keyword.");
+  const name = parseVariable(parser, { canAssign: false });
+
+  consume(parser, Token.LEFT_PAREN, name.loc, "Expect '(' after function name.");
+  consume(parser, Token.RIGHT_PAREN, parser.previous, "Expect ')' after parameters.");
+  consume(parser, Token.LEFT_BRACE, parser.previous, "Expect '{' before function body.");
+
+  const block = parseBlock(parser);
+
+  return {
+    kind: "funDecl",
+    name,
+    block,
+    loc: { start, end: block.loc.end }
+  };
+}
+
 // "var" variable ("=" expression)? ";"
 function parseVarDeclaration(parser: Parser): Statement {
   const start = parser.previous.start;
@@ -450,9 +479,14 @@ function parseVarDeclaration(parser: Parser): Statement {
 
 // Parse an individual declaration within a scope.
 function parseDeclaration(parser: Parser): Statement {
+  if (match(parser, Token.FUN)) {
+    return parseFunctionDeclaration(parser);
+  }
+
   if (match(parser, Token.VAR)) {
     return parseVarDeclaration(parser);
   }
+
   return parseStatement(parser);
 }
 

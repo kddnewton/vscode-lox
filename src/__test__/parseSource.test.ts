@@ -65,6 +65,12 @@ describe("parseSource", () => {
     });
   });
 
+  describe("funDecl", () => {
+    test("plain", () => {
+      expect("fun foo () { 1; }").toMatchAST("[(fun (var foo) [1])]");
+    });
+  });
+
   test("grouping", () => {
     expect("1 * (2 + 3)").toMatchAST("[(* 1 (+ 2 3))]");
   });
