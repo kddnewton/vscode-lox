@@ -118,6 +118,14 @@ const plugin: Plugin<AstNode> = {
               line,
               "}"
             ]);
+          case "call":
+            return group([
+              path.call(print, "recv"),
+              "(",
+              indent([softline, join([",", line], path.map(print, "args"))]),
+              softline,
+              ")"
+            ]);
           case "exprStmt":
             return [path.call(print, "expr"), ";"];
           case "forStmt": {
@@ -242,6 +250,8 @@ const plugin: Plugin<AstNode> = {
     case "block":
     case "scope":
       return node.decls;
+    case "call":
+      return [node.recv, ...node.args];
     case "exprStmt":
     case "printStmt":
     case "unary":

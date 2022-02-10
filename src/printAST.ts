@@ -9,6 +9,8 @@ function printAST(node: AstNode): string {
       return `(${printOperator(node.oper)} ${printAST(node.left)} ${printAST(node.right)})`;
     case "block":
       return `[${node.decls.map(printAST).join(", ")}]`;
+    case "call":
+      return `(call ${printAST(node.recv)} [${node.args.map(printAST).join(", ")}])`;
     case "exprStmt":
       return printAST(node.expr);
     case "forStmt": {

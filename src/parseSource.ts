@@ -9,6 +9,7 @@ type Expression = Location & (
   | { kind: "missing" }
   | { kind: "assign", variable: Expression, expression: Expression }
   | { kind: "binary", left: Expression, oper: Token, right: Expression }
+  | { kind: "call", recv: Expression, args: Expression[] }
   | { kind: "literal", value: null | boolean | number | string }
   | { kind: "variable", name: string }
   | { kind: "unary", oper: Token, expr: Expression }
@@ -87,8 +88,26 @@ const parseRules: { [T in Token]: ParseRule<T> } = {
       consume(parser, Token.RIGHT_PAREN, { start, end: node.loc.end }, "Expect ')' after expression.");
       return node;
     },
-    infix: null,
-    prec: Precedence.NONE
+    infix(parser, recv) {
+      const start = parser.previous.start;
+      let args: Expression[] = [];
+
+      if (!match(parser, Token.RIGHT_PAREN)) {
+        do {
+          args.push(parseExpression(parser));
+        } while (match(parser, Token.COMMA));
+
+        consume(parser, Token.RIGHT_PAREN, { start, end: parser.previous.end }, "Expect ')' after arguments.");
+      }
+
+      return {
+        kind: "call",
+        recv,
+        args,
+        loc: { start: recv.loc.start, end: parser.previous.end }
+      };
+    },
+    prec: Precedence.CALL
   },
   [Token.RIGHT_PAREN]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.LEFT_BRACE]: { prefix: null, infix: null, prec: Precedence.NONE },

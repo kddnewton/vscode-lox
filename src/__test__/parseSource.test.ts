@@ -43,6 +43,16 @@ describe("parseSource", () => {
     expect(source).toMatchAST("[[(+ 1 2)]]");
   });
 
+  describe("call", () => {
+    test("with no arguments", () => {
+      expect("foo();").toMatchAST("[(call (var foo) [])]");
+    });
+
+    test("with one argument", () => {
+      expect("foo(bar);").toMatchAST("[(call (var foo) [(var bar)])]");
+    });
+  });
+
   describe("forStmt", () => {
     test("nothing", () => {
       expect("for (;;) 1;").toMatchAST("[(for 1)]");

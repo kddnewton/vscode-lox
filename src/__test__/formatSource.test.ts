@@ -88,6 +88,24 @@ describe("formatSource", () => {
     });
   });
 
+  describe("call", () => {
+    test("with no arguments", () => {
+      expect("foo();").toMatchFormat();
+    });
+
+    test("with one argument", () => {
+      expect("foo(bar);").toMatchFormat();
+    });
+
+    test("with two arguments", () => {
+      expect("foo(bar, baz);").toMatchFormat();
+    });
+
+    test("with breaking arguments", () => {
+      expect(`foo(${long});`).toChangeFormat(`foo(\n  ${long}\n);`);
+    });
+  });
+
   describe("forStmt", () => {
     test("nothing", () => {
       expect("for (;;) i;").toMatchFormat();
