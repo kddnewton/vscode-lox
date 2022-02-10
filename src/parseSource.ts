@@ -18,7 +18,7 @@ type Statement = Location & (
   | { kind: "block", decls: Statement[] }
   | { kind: "exprStmt", expr: Expression }
   | { kind: "forStmt", init: Statement | null, cond: Expression | null, incr: Expression | null, stmt: Statement }
-  | { kind: "funDecl", name: Expression, block: Statement }
+  | { kind: "funDecl", name: Expression, params: Expression[], block: Statement }
   | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
   | { kind: "printStmt", expr: Expression }
   | { kind: "varDecl", var: string, init: Expression | null }
@@ -437,11 +437,21 @@ function parseStatement(parser: Parser): Statement {
 
 function parseFunctionDeclaration(parser: Parser): Statement {
   const start = parser.previous.start;
-
   consume(parser, Token.IDENTIFIER, parser.previous, "Expect name after 'fun' keyword.");
-  const name = parseVariable(parser, { canAssign: false });
 
-  consume(parser, Token.LEFT_PAREN, name.loc, "Expect '(' after function name.");
+  const name = parseVariable(parser, { canAssign: false });
+  consume(parser as ParserWithPrevious<Token>, Token.LEFT_PAREN, name.loc, "Expect '(' after function name.");
+
+  let params: Expression[] = [];
+  const paramsLocation = parser.previous;
+
+  if (!match(parser, Token.RIGHT_PAREN)) {
+    do {
+      consume(parser, Token.IDENTIFIER, paramsLocation, "Expect parameter identifier after '('.");
+      params.push(parseVariable(parser, { canAssign: false }));
+    } while (match(parser, Token.COMMA));
+  }
+
   consume(parser, Token.RIGHT_PAREN, parser.previous, "Expect ')' after parameters.");
   consume(parser, Token.LEFT_BRACE, parser.previous, "Expect '{' before function body.");
 
@@ -450,6 +460,7 @@ function parseFunctionDeclaration(parser: Parser): Statement {
   return {
     kind: "funDecl",
     name,
+    params,
     block,
     loc: { start, end: block.loc.end }
   };

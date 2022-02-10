@@ -2,6 +2,8 @@ import prettier, { Doc, Plugin, Printer } from "prettier";
 import { Comment, Token } from "./generateTokens";
 import parseSource, { AstNode } from "./parseSource";
 
+const { group, hardline, join, line, indent, softline } = prettier.doc.builders;
+
 export function printOperator(token: Token) {
   switch (token) {
     case Token.MINUS: return "-";
@@ -63,8 +65,6 @@ const printDecls: Printer["print"] = (path, opts, print) => {
 
   return parts;
 };
-
-const { group, hardline, line, indent, softline } = prettier.doc.builders;
 
 const plugin: Plugin<AstNode> = {
   languages: [
@@ -140,18 +140,30 @@ const plugin: Plugin<AstNode> = {
 
             return group(parts);
           }
-          case "funDecl":
+          case "funDecl": {
+            let paramsDoc: Doc;
+
+            if (node.params.length > 0) {
+              paramsDoc = [
+                "(",
+                indent([softline, join([",", line], path.map(print, "params"))]),
+                softline,
+                ")"
+              ];
+            } else {
+              paramsDoc = "()";
+            }
+
             return group([
               group([
                 group(["fun ", path.call(print, "name")]),
-                " (",
-                indent([softline]),
-                softline,
-                ")"
+                " ",
+                paramsDoc
               ]),
               " ",
               path.call(print, "block")
             ]);
+          }
           case "ifStmt": {
             const parts: Doc[] = [
               group([

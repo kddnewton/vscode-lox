@@ -28,8 +28,15 @@ function printAST(node: AstNode): string {
 
       return `${ast} ${printAST(node.stmt)})`;
     }
-    case "funDecl":
-      return `(fun ${printAST(node.name)} ${printAST(node.block)})`;
+    case "funDecl": {
+      let ast = `(fun ${printAST(node.name)}`;
+
+      if (node.params.length > 0) {
+        ast = `${ast} [${node.params.map(printAST).join(", ")}]`;
+      }
+
+      return `${ast} ${printAST(node.block)})`;
+    }
     case "ifStmt": {
       let ast = `(if ${printAST(node.pred)} ${printAST(node.stmt)}`;
 

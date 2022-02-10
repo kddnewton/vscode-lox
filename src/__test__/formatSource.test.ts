@@ -118,6 +118,14 @@ describe("formatSource", () => {
     test("plain", () => {
       expect("fun foo () { 1; }").toMatchFormat();
     });
+
+    test("with params", () => {
+      expect("fun foo (bar, baz) { 1; }").toMatchFormat();
+    });
+
+    test("with breaking params", () => {
+      expect(`fun foo (${long}) { 1; }`).toChangeFormat(`fun foo (\n  ${long}\n) { 1; }`);
+    });
   });
 
   describe("ifStmt", () => {
