@@ -54,6 +54,15 @@ function printAST(node: AstNode): string {
       return " ";
     case "printStmt":
       return `(print ${printAST(node.expr)})`;
+    case "returnStmt": {
+      let ast = "(return";
+
+      if (node.expr) {
+        ast = `${ast} ${printAST(node.expr)}`;
+      }
+
+      return `${ast})`;
+    }
     case "scope":
       return `[${node.decls.map(printAST).join(", ")}]`;
     case "unary":

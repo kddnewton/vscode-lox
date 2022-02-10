@@ -202,6 +202,12 @@ const plugin: Plugin<AstNode> = {
             return " ";
           case "printStmt":
             return group(["print ", path.call(print, "expr"), ";"]);
+          case "returnStmt":
+            if (node.expr) {
+              return group(["return ", path.call(print, "expr"), ";"]);
+            } else {
+              return "return;"
+            }
           case "scope":
             return [printDecls(path, opts, print), hardline];
           case "unary":
@@ -288,6 +294,8 @@ const plugin: Plugin<AstNode> = {
     case "missing":
     case "variable":
       return [];
+    case "returnStmt":
+      return node.expr ? [node.expr] : [];
     case "varDecl": {
       const childNodes = [];
       if (node.init) {

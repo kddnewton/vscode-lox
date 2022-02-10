@@ -22,6 +22,7 @@ type Statement = Location & (
   | { kind: "funDecl", name: Expression, params: Expression[], block: Statement }
   | { kind: "ifStmt", pred: Expression, stmt: Statement, cons: Statement | null }
   | { kind: "printStmt", expr: Expression }
+  | { kind: "returnStmt", expr: Expression | null }
   | { kind: "varDecl", var: string, init: Expression | null }
   | { kind: "whileStmt", pred: Expression, stmt: Statement }
 );
@@ -385,6 +386,22 @@ function parseIfStatement(parser: Parser): Statement {
   return node;
 }
 
+function parseReturnStatement(parser: Parser): Statement {
+  const { start } = parser.previous;
+  if (match(parser, Token.SEMICOLON)) {
+    return { kind: "returnStmt", expr: null, loc: { start, end: parser.previous.end } };
+  }
+
+  const expression = parseExpression(parser);
+  consume(parser, Token.SEMICOLON, expression.loc, "Expect ';' after return value.");
+
+  return {
+    kind: "returnStmt",
+    expr: expression,
+    loc: { start, end: parser.previous.end }
+  };
+}
+
 function parseWhileStatement(parser: Parser): Statement {
   const { start } = parser.previous;
 
@@ -441,6 +458,10 @@ function parseStatement(parser: Parser): Statement {
 
   if (match(parser, Token.IF)) {
     return parseIfStatement(parser);
+  }
+
+  if (match(parser, Token.RETURN)) {
+    return parseReturnStatement(parser);
   }
 
   if (match(parser, Token.WHILE)) {

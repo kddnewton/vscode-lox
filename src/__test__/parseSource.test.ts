@@ -103,6 +103,16 @@ describe("parseSource", () => {
     expect("print foo;").toMatchAST("[(print (var foo))]");
   });
 
+  describe("returnStmt", () => {
+    test("no expression", () => {
+      expect("return;").toMatchAST("[(return)]");
+    });
+
+    test("with expression", () => {
+      expect("return 1;").toMatchAST("[(return 1)]");
+    });
+  });
+
   test("unary", () => {
     expect("!foo;").toMatchAST("[(! (var foo))]");
   });

@@ -185,6 +185,16 @@ describe("formatSource", () => {
     });
   });
 
+  describe("returnStmt", () => {
+    test("no expression", () => {
+      expect("return;").toMatchFormat();
+    });
+
+    test("with expression", () => {
+      expect("return 1;").toMatchFormat();
+    });
+  });
+
   describe("scope", () => {
     test("declarations", () => {
       expect("var a = 1; var b = 2;").toChangeFormat("var a = 1;\nvar b = 2;");
