@@ -82,6 +82,25 @@ type ParseRule<T extends Token> = {
 };
 
 const parseRules: { [T in Token]: ParseRule<T> } = {
+  [Token.CLASS]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.COMMA]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.DOT]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.ELSE]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.EOF]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.ERROR]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.FOR]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.FUN]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.IF]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.LEFT_BRACE]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.PRINT]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.RETURN]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.RIGHT_BRACE]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.RIGHT_PAREN]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.SEMICOLON]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.SUPER]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.THIS]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.VAR]: { prefix: null, infix: null, prec: Precedence.NONE },
+  [Token.WHILE]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.LEFT_PAREN]: {
     prefix(parser) {
       const start = parser.previous.start;
@@ -111,14 +130,8 @@ const parseRules: { [T in Token]: ParseRule<T> } = {
     },
     prec: Precedence.CALL
   },
-  [Token.RIGHT_PAREN]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.LEFT_BRACE]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.RIGHT_BRACE]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.COMMA]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.DOT]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.MINUS]: { prefix: parseUnary, infix: parseBinary, prec: Precedence.TERM },
   [Token.PLUS]: { prefix: null, infix: parseBinary, prec: Precedence.TERM },
-  [Token.SEMICOLON]: { prefix: null, infix: null, prec: Precedence.NONE },
   [Token.SLASH]: { prefix: null, infix: parseBinary, prec: Precedence.FACTOR },
   [Token.STAR]: { prefix: null, infix: parseBinary, prec: Precedence.FACTOR },
   [Token.BANG]: { prefix: parseUnary, infix: null, prec: Precedence.NONE },
@@ -130,26 +143,76 @@ const parseRules: { [T in Token]: ParseRule<T> } = {
   [Token.LESS]: { prefix: null, infix: parseBinary, prec: Precedence.COMPARISON },
   [Token.LESS_EQUAL]: { prefix: null, infix: parseBinary, prec: Precedence.COMPARISON },
   [Token.IDENTIFIER]: { prefix: parseVariable, infix: null, prec: Precedence.NONE },
-  [Token.STRING]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
-  [Token.NUMBER]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
-  [Token.AND]: { prefix: null, infix: parseLogicalAnd, prec: Precedence.AND },
-  [Token.CLASS]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.ELSE]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.FALSE]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
-  [Token.FOR]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.FUN]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.IF]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.NIL]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
-  [Token.OR]: { prefix: null, infix: parseLogicalOr, prec: Precedence.OR },
-  [Token.PRINT]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.RETURN]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.SUPER]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.THIS]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.TRUE]: { prefix: parseLiteral, infix: null, prec: Precedence.NONE },
-  [Token.VAR]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.WHILE]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.EOF]: { prefix: null, infix: null, prec: Precedence.NONE },
-  [Token.ERROR]: { prefix: null, infix: null, prec: Precedence.NONE }
+  [Token.AND]: {
+    prefix: null,
+    infix(parser: Parser, left: Expression): Expression {
+      const right = parsePrecedence(parser, Precedence.AND);
+    
+      return {
+        kind: "binary",
+        left,
+        oper: Token.AND,
+        right,
+        loc: { start: left.loc.start, end: right.loc.end }
+      };
+    },
+    prec: Precedence.AND
+  },
+  [Token.OR]: {
+    prefix: null,
+    infix(parser: Parser, left: Expression): Expression {
+      const right = parsePrecedence(parser, Precedence.OR);
+
+      return {
+        kind: "binary",
+        left,
+        oper: Token.OR,
+        right,
+        loc: { start: left.loc.start, end: right.loc.end }
+      };
+    },
+    prec: Precedence.OR
+  },
+  [Token.STRING]: {
+    prefix(parser) {
+      const { start, end, value } = parser.previous;
+      return { kind: "literal", value, loc: { start, end } };
+    },
+    infix: null,
+    prec: Precedence.NONE
+  },
+  [Token.NUMBER]: {
+    prefix(parser) {
+      const { start, end, value } = parser.previous;
+      return { kind: "literal", value, loc: { start, end } };
+    },
+    infix: null,
+    prec: Precedence.NONE
+  },
+  [Token.TRUE]: {
+    prefix(parser) {
+      const { start, end } = parser.previous;
+      return { kind: "literal", value: true, loc: { start, end } };
+    },
+    infix: null,
+    prec: Precedence.NONE
+  },
+  [Token.FALSE]: {
+    prefix(parser) {
+      const { start, end } = parser.previous;
+      return { kind: "literal", value: false, loc: { start, end } };
+    },
+    infix: null,
+    prec: Precedence.NONE
+  },
+  [Token.NIL]: {
+    prefix(parser) {
+      const { start, end } = parser.previous;
+      return { kind: "literal", value: null, loc: { start, end } };
+    },
+    infix: null,
+    prec: Precedence.NONE
+  }
 };
 
 // Consume the expected token out of the parser. If the next token doesn't match
@@ -208,24 +271,6 @@ function parseVariable(parser: Parser, { canAssign }: PrefixOptions): Expression
   return variable;
 }
 
-// false | true | nil | string | number
-function parseLiteral(parser: ParserWithPrevious<Token.FALSE | Token.TRUE | Token.NIL | Token.STRING | Token.NUMBER>): Expression {
-  const loc = { start: parser.previous.start, end: parser.previous.end };
-
-  switch (parser.previous.kind) {
-    case Token.FALSE:
-      return { kind: "literal", value: false, loc };
-    case Token.TRUE:
-      return { kind: "literal", value: true, loc };
-    case Token.NIL:
-      return { kind: "literal", value: null, loc };
-    case Token.STRING:
-      return { kind: "literal", value: parser.previous.value, loc };
-    case Token.NUMBER:
-      return { kind: "literal", value: parser.previous.value, loc };
-  }
-}
-
 // ("-" | "!") node
 function parseUnary(parser: ParserWithPrevious<Token.MINUS | Token.BANG>): Expression {
   const oper = parser.previous.kind;
@@ -258,32 +303,6 @@ function parseBinary(parser: Parser, left: Expression): Expression {
     kind: "binary",
     left,
     oper,
-    right,
-    loc: { start: left.loc.start, end: right.loc.end }
-  };
-}
-
-// node "and" node
-function parseLogicalAnd(parser: Parser, left: Expression): Expression {
-  const right = parsePrecedence(parser, Precedence.AND);
-
-  return {
-    kind: "binary",
-    left,
-    oper: Token.AND,
-    right,
-    loc: { start: left.loc.start, end: right.loc.end }
-  };
-}
-
-// node "or" node
-function parseLogicalOr(parser: Parser, left: Expression): Expression {
-  const right = parsePrecedence(parser, Precedence.OR);
-
-  return {
-    kind: "binary",
-    left,
-    oper: Token.OR,
     right,
     loc: { start: left.loc.start, end: right.loc.end }
   };
@@ -484,7 +503,7 @@ function parseClassDeclaration(parser: Parser): Statement {
 
   consume(parser as ParserWithPrevious<Token>, Token.LEFT_BRACE, parser.previous, "Expect '{' after class declaration.");
   consume(parser as ParserWithPrevious<Token>, Token.RIGHT_BRACE, parser.previous, "Expect '}' after class body.");
-  
+
   return {
     kind: "classDecl",
     name,
